@@ -70,6 +70,9 @@ function DashboardScreen({ navigation }: DashboardScreenProps) {
     <SafeAreaView style={styles.screenWithFooter} edges={['bottom']}>
       <View style={styles.screenContent}>
         <Text style={styles.screenText}>Dashboard</Text>
+        <Text style={styles.statusBarDemo}>
+          📱 This screen uses light status bar content on blue header
+        </Text>
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
             style={styles.primaryButton} 
@@ -79,7 +82,7 @@ function DashboardScreen({ navigation }: DashboardScreenProps) {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons name="card" size={20} color="white" style={styles.buttonIcon} />
-            <Text style={styles.buttonText}>My Cards</Text>
+            <Text style={styles.buttonText}>My Card List</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.secondaryButton} 
@@ -143,10 +146,15 @@ function CardsScreen({ navigation }: CardsScreenProps) {
 function SimulationScreen({ navigation }: SimulationScreenProps) {
   return (
     <SafeAreaView style={styles.screenWithFooter} edges={['bottom']}>
+      {/* Method 2: Using expo-status-bar component to override status bar style */}
+      <StatusBar style="dark" backgroundColor="#ffffff" />
       <View style={styles.screenContent}>
         <Text style={styles.screenText}>Simulation</Text>
         <View style={styles.simulationContent}>
           <Text style={styles.placeholderText}>Credit card simulation tools would go here</Text>
+          <Text style={styles.statusBarDemo}>
+            📱 This screen uses dark status bar content on white background
+          </Text>
           <TouchableOpacity 
             style={styles.primaryButton} 
             onPress={() => navigation.navigate('Dashboard')}
@@ -315,7 +323,9 @@ export default function App() {
             headerTitleStyle: {
               fontWeight: 'bold',
             },
+            // Global status bar style - light content on blue header
             statusBarStyle: 'light',
+            statusBarAnimation: 'fade',
             statusBarBackgroundColor: '#0A84FF',
           }}
         >
@@ -361,6 +371,15 @@ export default function App() {
             options={({ navigation }) => ({
               title: 'Simulation',
               gestureEnabled: true,
+              // Override status bar style for this screen - dark content on white header
+              statusBarStyle: 'dark',
+              statusBarAnimation: 'fade',
+              headerStyle: {
+                backgroundColor: '#ffffff',
+                ...(Platform.OS === 'android' && { elevation: 0 }),
+                ...(Platform.OS === 'ios' && { shadowOpacity: 0 }),
+              },
+              headerTintColor: '#0A84FF',
               headerLeft: () => (
                 <TouchableOpacity
                   style={styles.headerButton}
@@ -377,7 +396,7 @@ export default function App() {
                   <Ionicons 
                     name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'} 
                     size={24} 
-                    color="white" 
+                    color="#0A84FF" 
                   />
                 </TouchableOpacity>
               ),
@@ -630,5 +649,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  statusBarDemo: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
