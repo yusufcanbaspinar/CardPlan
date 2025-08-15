@@ -1,10 +1,11 @@
-import React from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, Platform, Alert, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Text, View, StyleSheet, TouchableOpacity, Platform, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { initializeDatabase } from './db/schema';
 
 export type RootStackParamList = {
   Dashboard: undefined;
@@ -232,6 +233,71 @@ function AddCardScreen({ navigation }: AddCardScreenProps) {
 }
 
 export default function App() {
+  const [isDbReady, setIsDbReady] = useState(false);
+  const [dbError, setDbError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const setupDatabase = async () => {
+      try {
+        console.log('🔄 Initializing database...');
+        const result = await initializeDatabase();
+        
+        if (result.success) {
+          setIsDbReady(true);
+          console.log('✅ App database initialization successful');
+        } else {
+          const errorMessage = result.errors.join(', ');
+          setDbError(errorMessage);
+          console.error('❌ App database initialization failed:', errorMessage);
+        }
+      } catch (error) {
+        const errorMessage = `Database setup failed: ${error}`;
+        setDbError(errorMessage);
+        console.error('❌ Critical database error:', error);
+      }
+    };
+
+    setupDatabase();
+  }, []);
+
+  // Show loading screen while database is being initialized
+  if (!isDbReady && !dbError) {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0A84FF" />
+          <Text style={styles.loadingText}>Setting up database...</Text>
+        </SafeAreaView>
+        <StatusBar style="light" />
+      </SafeAreaProvider>
+    );
+  }
+
+  // Show error screen if database initialization failed
+  if (dbError) {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.errorContainer}>
+          <Ionicons name="warning" size={64} color="#FF3B30" />
+          <Text style={styles.errorTitle}>Database Error</Text>
+          <Text style={styles.errorMessage}>{dbError}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => {
+              setDbError(null);
+              setIsDbReady(false);
+              // This will trigger useEffect again
+            }}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+        <StatusBar style="light" />
+      </SafeAreaProvider>
+    );
+  }
+
+  // Database is ready, show the main app
   return (
     <SafeAreaProvider>
       <NavigationContainer>
@@ -521,5 +587,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 20,
     width: '100%',
+  },
+  // Database initialization loading/error styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 20,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FF3B30',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#0A84FF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
